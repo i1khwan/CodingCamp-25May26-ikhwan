@@ -363,30 +363,67 @@ canvas {
     display: none;
 }
 
-#backButton {
-    background-color: var(--secondary-color);
-    color: white;
-    margin-bottom: 1rem;
+#monthlyView.hidden {
+    display: none;
 }
 
-#backButton:hover {
-    background-color: #2980b9;
-}
-
-#monthlyButton {
+#monthlyViewBtn {
     background-color: var(--success-color);
     color: white;
     width: 100%;
     margin-top: 1rem;
 }
 
-#monthlyButton:hover {
+#monthlyViewBtn:hover {
     background-color: #229954;
 }
 
-#monthlyButton:focus {
+#monthlyViewBtn:focus {
     outline: 2px solid var(--success-color);
     outline-offset: 2px;
+}
+
+#returnBtn {
+    background-color: var(--secondary-color);
+    color: white;
+    margin-bottom: 1rem;
+}
+
+#returnBtn:hover {
+    background-color: #2980b9;
+}
+
+.monthly-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.monthly-card {
+    background-color: #f9f9f9;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+body.dark-theme .monthly-card {
+    background-color: var(--primary-color);
+}
+
+.monthly-card-label {
+    font-size: 0.875rem;
+    color: #7f8c8d;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.monthly-card-value {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: var(--secondary-color);
 }
 
 .monthly-summary-item {

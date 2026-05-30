@@ -6,6 +6,14 @@
     <title>Expense & Budget Visualizer</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script>
+        // Check if Chart.js failed to load
+        window.addEventListener('load', function() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js failed to load from CDN');
+            }
+        });
+    </script>
 </head>
 <body>
     <header>
@@ -69,19 +77,20 @@
             <section id="chartSection">
                 <h2>Spending Breakdown</h2>
                 <div id="chartContainer">
-                    <canvas id="spendingChart"></canvas>
+                    <canvas id="categoryChart"></canvas>
+                    <div id="chartEmptyState" class="empty-state" style="display: none;">Add transactions to see spending breakdown</div>
                 </div>
             </section>
 
             <!-- Monthly Summary Button -->
-            <button id="monthlyButton">View Monthly Summary</button>
+            <button id="monthlyViewBtn">View Monthly Summary</button>
         </section>
 
         <!-- Monthly Summary View -->
-        <section id="monthlyView" style="display: none;">
+        <section id="monthlyView" class="hidden">
             <h2>Monthly Summary</h2>
-            <button id="backButton">Back to Main View</button>
-            <div id="monthlySummary">
+            <button id="returnBtn">Back to Main View</button>
+            <div id="monthlyContent">
                 <p class="empty-state">No expenses this month</p>
             </div>
         </section>
