@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense & Budget Visualizer</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Expense & Budget Visualizer</h1>
+        <button id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </header>
+
+    <main>
+        <section id="mainView">
+            <!-- Transaction Input Form -->
+            <section id="formSection">
+                <h2>Add Transaction</h2>
+                <form id="transactionForm">
+                    <div class="form-group">
+                        <label for="itemName">Item Name</label>
+                        <input type="text" id="itemName" placeholder="e.g., Coffee" maxlength="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" placeholder="0.00" step="0.01" min="0.01" max="999999.99" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" required>
+                            <option value="">Select a category</option>
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Fun">Fun</option>
+                        </select>
+                    </div>
+                    <button type="submit">Add Transaction</button>
+                </form>
+                <div id="formErrors" class="error-messages"></div>
+            </section>
+
+            <!-- Balance Display -->
+            <section id="balanceSection">
+                <h2>Total Balance</h2>
+                <div id="totalBalance" class="balance-display">$0.00</div>
+            </section>
+
+            <!-- Sorting Controls -->
+            <section id="sortingSection">
+                <h2>Sort Transactions</h2>
+                <div class="sort-controls">
+                    <button id="sortDate" class="sort-btn active" data-sort="date">Date (Newest First)</button>
+                    <button id="sortAmount" class="sort-btn" data-sort="amount">Amount (Highest First)</button>
+                    <button id="sortCategory" class="sort-btn" data-sort="category">Category (A-Z)</button>
+                </div>
+            </section>
+
+            <!-- Transaction List -->
+            <section id="transactionSection">
+                <h2>Transactions</h2>
+                <div id="transactionList" class="transaction-list">
+                    <p class="empty-state">No transactions yet. Add your first expense!</p>
+                </div>
+            </section>
+
+            <!-- Chart Display -->
+            <section id="chartSection">
+                <h2>Spending Breakdown</h2>
+                <div id="chartContainer">
+                    <canvas id="spendingChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Monthly Summary Button -->
+            <button id="monthlyButton">View Monthly Summary</button>
+        </section>
+
+        <!-- Monthly Summary View -->
+        <section id="monthlyView" style="display: none;">
+            <h2>Monthly Summary</h2>
+            <button id="backButton">Back to Main View</button>
+            <div id="monthlySummary">
+                <p class="empty-state">No expenses this month</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Expense & Budget Visualizer</p>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

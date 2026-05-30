@@ -1,0 +1,21 @@
+{
+  "name": "expense-budget-visualizer",
+  "version": "1.0.0",
+  "description": "A mobile-friendly web application for tracking daily spending",
+  "main": "js/app.js",
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "keywords": [
+    "expense",
+    "budget",
+    "tracker",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

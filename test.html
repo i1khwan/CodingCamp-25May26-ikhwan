@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Visualizer - Tests</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-suite {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-pass {
+            color: green;
+            margin: 5px 0;
+        }
+        .test-fail {
+            color: red;
+            margin: 5px 0;
+        }
+        .test-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 5px;
+        }
+        .summary {
+            background: #e8f5e9;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Expense Visualizer - Test Results</h1>
+    <div id="results"></div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // Test utilities
+        let passCount = 0;
+        let failCount = 0;
+        const results = [];
+
+        const createMockTransaction = (overrides = {}) => {
+            const defaults = {
+                id: Date.now().toString(),
+                itemName: 'Test Item',
+                amount: '10.00',
+                category: 'Food',
+                timestamp: Date.now()
+            };
+            return { ...defaults, ...overrides };
+        };
+
+        const test = (name, fn) => {
+            try {
+                fn();
+                passCount++;
+                results.push(`<div class="test-pass">✓ ${name}</div>`);
+            } catch (error) {
+                failCount++;
+                results.push(`<div class="test-fail">✗ ${name}: ${error.message}</div>`);
+            }
+        };
+
+        const expect = (value) => {
+            return {
+                toBe: (expected) => {
+                    if (value !== expected) {
+                        throw new Error(`Expected ${expected}, but got ${value}`);
+                    }
+                },
+                toEqual: (expected) => {
+                    if (JSON.stringify(value) !== JSON.stringify(expected)) {
+                        throw new Error(`Expected ${JSON.stringify(expected)}, but got ${JSON.stringify(value)}`);
+                    }
+                },
+                toHaveLength: (length) => {
+                    if (value.length !== length) {
+                        throw new Error(`Expected length ${length}, but got ${value.length}`);
+                    }
+                },
+                toBeGreaterThanOrEqual: (expected) => {
+                    if (value < expected) {
+                        throw new Error(`Expected ${value} to be >= ${expected}`);
+                    }
+                },
+                toBeGreaterThan: (expected) => {
+                    if (value <= expected) {
+                        throw new Error(`Expected ${value} to be > ${expected}`);
+                    }
+                },
+                toBeLessThanOrEqual: (expected) => {
+                    if (value > expected) {
+                        throw new Error(`Expected ${value} to be <= ${expected}`);
+                    }
+                },
+                toBeLessThan: (expected) => {
+                    if (value >= expected) {
+                        throw new Error(`Expected ${value} to be < ${expected}`);
+                    }
+                }
+            };
+        };
+
+        // ====================================================================
+        // UNIT TESTS FOR SORTING
+        // ====================================================================
+
+        results.push('<div class="test-suite"><div class="test-title">sortTransactions - Unit Tests</div>');
+
+        test('should sort by date in reverse chronological order (newest first)', () => {
+            const now = Date.now();
+            const transactions = [
+                createMockTransaction({ id: '1', timestamp: now - 3000 }),
+                createMockTransaction({ id: '2', timestamp: now - 1000 }),
+                createMockTransaction({ id: '3', timestamp: now - 2000 })
+            ];
+
+            const sorted = FilterModule.sortTransactions(transactions, 'date');
+
+            expect(sorted[0].id).toBe('2');
+            expect(sorted[1].id).toBe('3');
+            expect(sorted[2].id).toBe('1');
+        });
+
+        test('should sort by amount from highest to lowest', () => {
+            const transactions = [
+                createMockTransaction({ id: '1', amount: '50.00' }),
+                createMockTransaction({ id: '2', amount: '100.00' }),
+                createMockTransaction({ id: '3', amount: '25.00' })
+            ];
+
+            const sorted = FilterModule.sortTransactions(transactions, 'amount');
+
+            expect(sorted[0].id).toBe('2');
+            expect(sorted[1].id).toBe('1');
+            expect(sorted[2].id).toBe('3');
+        });
+
+        test('should sort by category alphabetically with secondary date sort', () => {
+            const now = Date.now();
+            const transactions = [
+                createMockTransaction({ id: '1', category: 'Transport', timestamp: now - 1000 }),
+                createMockTransaction({ id: '2', category: 'Food', timestamp: now - 2000 }),
+                createMockTransaction({ id: '3', category: 'Fun', timestamp: now - 3000 }),
+                createMockTransaction({ id: '4', category: 'Food', timestamp: now - 1000 })
+            ];
+
+            const sorted = FilterModule.sortTransactions(transactions, 'category');
+
+            // Food should come first (alphabetically)
+            expect(sorted[0].category).toBe('Food');
+            expect(sorted[1].category).toBe('Food');
+            // Within Food, newest first (id 4 before id 2)
+            expect(sorted[0].id).toBe('4');
+            expect(sorted[1].id).toBe('2');
+            // Then Fun
+            expect(sorted[2].category).toBe('Fun');
+            // Then Transport
+            expect(sorted[3].category).toBe('Transport');
+        });
+
+        test('should handle empty transaction list', () => {
+            const sorted = FilterModule.sortTransactions([], 'date');
+            expect(sorted).toEqual([]);
+        });
+
+        test('should handle single transaction', () => {
+            const transaction = createMockTransaction();
+            const sorted = FilterModule.sortTransactions([transaction], 'date');
+            expect(sorted).toHaveLength(1);
+        });
+
+        test('should not mutate original array', () => {
+            const transactions = [
+                createMockTransaction({ id: '1' }),
+                createMockTransaction({ id: '2' })
+            ];
+            const original = JSON.stringify(transactions);
+
+            FilterModule.sortTransactions(transactions, 'amount');
+
+            expect(JSON.stringify(transactions)).toBe(original);
+        });
+
+        results.push('</div>');
+
+        // ====================================================================
+        // UNIT TESTS FOR FILTERING
+        // ====================================================================
+
+        results.push('<div class="test-suite"><div class="test-title">filterByMonth - Unit Tests</div>');
+
+        test('should filter transactions for a specific month', () => {
+            // January 2024
+            const jan1 = new Date(2024, 0, 15).getTime();
+            const jan31 = new Date(2024, 0, 31).getTime();
+            const feb1 = new Date(2024, 1, 1).getTime();
+
+            const transactions = [
+                createMockTransaction({ id: '1', timestamp: jan1 }),
+                createMockTransaction({ id: '2', timestamp: jan31 }),
+                createMockTransaction({ id: '3', timestamp: feb1 })
+            ];
+
+            const filtered = FilterModule.filterByMonth(transactions, 2024, 1);
+
+            expect(filtered).toHaveLength(2);
+            expect(filtered[0].id).toBe('1');
+            expect(filtered[1].id).toBe('2');
+        });
+
+        test('should return empty array when no transactions match month', () => {
+            const jan1 = new Date(2024, 0, 15).getTime();
+            const transactions = [
+                createMockTransaction({ id: '1', timestamp: jan1 })
+            ];
+
+            const filtered = FilterModule.filterByMonth(transactions, 2024, 2);
+
+            expect(filtered).toHaveLength(0);
+        });
+
+        test('should handle empty transaction list', () => {
+            const filtered = FilterModule.filterByMonth([], 2024, 1);
+            expect(filtered).toEqual([]);
+        });
+
+        test('should filter correctly across year boundaries', () => {
+            const dec2023 = new Date(2023, 11, 31).getTime();
+            const jan2024 = new Date(2024, 0, 1).getTime();
+
+            const transactions = [
+                createMockTransaction({ id: '1', timestamp: dec2023 }),
+                createMockTransaction({ id: '2', timestamp: jan2024 })
+            ];
+
+            const filtered2023 = FilterModule.filterByMonth(transactions, 2023, 12);
+            const filtered2024 = FilterModule.filterByMonth(transactions, 2024, 1);
+
+            expect(filtered2023).toHaveLength(1);
+            expect(filtered2023[0].id).toBe('1');
+            expect(filtered2024).toHaveLength(1);
+            expect(filtered2024[0].id).toBe('2');
+        });
+
+        test('should not mutate original array', () => {
+            const jan1 = new Date(2024, 0, 15).getTime();
+            const transactions = [
+                createMockTransaction({ id: '1', timestamp: jan1 })
+            ];
+            const original = JSON.stringify(transactions);
+
+            FilterModule.filterByMonth(transactions, 2024, 1);
+
+            expect(JSON.stringify(transactions)).toBe(original);
+        });
+
+        results.push('</div>');
+
+        // ====================================================================
+        // PROPERTY-BASED TESTS
+        // ====================================================================
+
+        results.push('<div class="test-suite"><div class="test-title">Property-Based Tests</div>');
+
+        test('Property 5: Reverse chronological ordering (100 iterations)', () => {
+            for (let i = 0; i < 100; i++) {
+                const count = Math.floor(Math.random() * 50) + 1;
+                const now = Date.now();
+                const transactions = Array.from({ length: count }, (_, idx) => 
+                    createMockTransaction({ 
+                        id: idx.toString(),
+                        timestamp: now - Math.random() * 1000000
+                    })
+                );
+
+                const sorted = FilterModule.sortTransactions(transactions, 'date');
+
+                for (let j = 0; j < sorted.length - 1; j++) {
+                    if (sorted[j].timestamp < sorted[j + 1].timestamp) {
+                        throw new Error(`Iteration ${i}: Not in reverse chronological order`);
+                    }
+                }
+            }
+        });
+
+        test('Property 13: Sort by amount descending (100 iterations)', () => {
+            for (let i = 0; i < 100; i++) {
+                const count = Math.floor(Math.random() * 50) + 1;
+                const transactions = Array.from({ length: count }, (_, idx) => 
+                    createMockTransaction({ 
+                        id: idx.toString(),
+                        amount: (Math.random() * 999999.99).toFixed(2)
+                    })
+                );
+
+                const sorted = FilterModule.sortTransactions(transactions, 'amount');
+
+                for (let j = 0; j < sorted.length - 1; j++) {
+                    const currentAmount = parseFloat(sorted[j].amount);
+                    const nextAmount = parseFloat(sorted[j + 1].amount);
+                    if (currentAmount < nextAmount) {
+                        throw new Error(`Iteration ${i}: Not in descending order by amount`);
+                    }
+                }
+            }
+        });
+
+        test('Property 14: Sort by category alphabetically (100 iterations)', () => {
+            for (let i = 0; i < 100; i++) {
+                const count = Math.floor(Math.random() * 50) + 1;
+                const categories = ['Food', 'Transport', 'Fun'];
+                const now = Date.now();
+                const transactions = Array.from({ length: count }, (_, idx) => 
+                    createMockTransaction({ 
+                        id: idx.toString(),
+                        category: categories[Math.floor(Math.random() * 3)],
+                        timestamp: now - Math.random() * 1000000
+                    })
+                );
+
+                const sorted = FilterModule.sortTransactions(transactions, 'category');
+
+                for (let j = 0; j < sorted.length - 1; j++) {
+                    const currentCategory = sorted[j].category;
+                    const nextCategory = sorted[j + 1].category;
+                    const comparison = currentCategory.localeCompare(nextCategory);
+                    
+                    if (comparison === 0) {
+                        if (sorted[j].timestamp < sorted[j + 1].timestamp) {
+                            throw new Error(`Iteration ${i}: Secondary sort by date failed`);
+                        }
+                    } else if (comparison > 0) {
+                        throw new Error(`Iteration ${i}: Not in alphabetical order by category`);
+                    }
+                }
+            }
+        });
+
+        test('Property 11: Monthly filtering (100 iterations)', () => {
+            for (let i = 0; i < 100; i++) {
+                const year = 2024;
+                const month = Math.floor(Math.random() * 12) + 1;
+                
+                const count = Math.floor(Math.random() * 50) + 1;
+                const transactions = Array.from({ length: count }, (_, idx) => {
+                    const randomMonth = Math.floor(Math.random() * 12) + 1;
+                    const randomDay = Math.floor(Math.random() * 28) + 1;
+                    const timestamp = new Date(year, randomMonth - 1, randomDay).getTime();
+                    return createMockTransaction({ 
+                        id: idx.toString(),
+                        timestamp
+                    });
+                });
+
+                const filtered = FilterModule.filterByMonth(transactions, year, month);
+
+                filtered.forEach(transaction => {
+                    const date = new Date(transaction.timestamp);
+                    if (date.getFullYear() !== year || date.getMonth() + 1 !== month) {
+                        throw new Error(`Iteration ${i}: Filtered transaction not in specified month`);
+                    }
+                });
+
+                transactions.forEach(transaction => {
+                    const date = new Date(transaction.timestamp);
+                    const isInMonth = date.getFullYear() === year && date.getMonth() + 1 === month;
+                    const isInFiltered = filtered.some(t => t.id === transaction.id);
+                    if (isInFiltered !== isInMonth) {
+                        throw new Error(`Iteration ${i}: Filtering logic incorrect`);
+                    }
+                });
+            }
+        });
+
+        results.push('</div>');
+
+        // ====================================================================
+        // EDGE CASE TESTS
+        // ====================================================================
+
+        results.push('<div class="test-suite"><div class="test-title">Edge Case Tests</div>');
+
+        test('should handle transactions with identical amounts', () => {
+            const transactions = [
+                createMockTransaction({ id: '1', amount: '50.00' }),
+                createMockTransaction({ id: '2', amount: '50.00' }),
+                createMockTransaction({ id: '3', amount: '50.00' })
+            ];
+
+            const sorted = FilterModule.sortTransactions(transactions, 'amount');
+            expect(sorted).toHaveLength(3);
+        });
+
+        test('should handle very large amounts', () => {
+            const transactions = [
+                createMockTransaction({ id: '1', amount: '999999.99' }),
+                createMockTransaction({ id: '2', amount: '0.01' }),
+                createMockTransaction({ id: '3', amount: '500000.00' })
+            ];
+
+            const sorted = FilterModule.sortTransactions(transactions, 'amount');
+            expect(parseFloat(sorted[0].amount)).toBe(999999.99);
+            expect(parseFloat(sorted[1].amount)).toBe(500000.00);
+            expect(parseFloat(sorted[2].amount)).toBe(0.01);
+        });
+
+        test('should handle all three categories in category sort', () => {
+            const transactions = [
+                createMockTransaction({ id: '1', category: 'Fun' }),
+                createMockTransaction({ id: '2', category: 'Food' }),
+                createMockTransaction({ id: '3', category: 'Transport' })
+            ];
+
+            const sorted = FilterModule.sortTransactions(transactions, 'category');
+            expect(sorted[0].category).toBe('Food');
+            expect(sorted[1].category).toBe('Fun');
+            expect(sorted[2].category).toBe('Transport');
+        });
+
+        results.push('</div>');
+
+        // ====================================================================
+        // DISPLAY RESULTS
+        // ====================================================================
+
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = results.join('');
+        
+        const summary = `<div class="summary">Tests Passed: ${passCount} | Tests Failed: ${failCount} | Total: ${passCount + failCount}</div>`;
+        resultsDiv.innerHTML += summary;
+
+        if (failCount === 0) {
+            resultsDiv.innerHTML += '<div class="summary" style="background: #c8e6c9; color: green;">✓ All tests passed!</div>';
+        }
+    </script>
+</body>
+</html>
